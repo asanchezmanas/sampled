@@ -1,0 +1,307 @@
+<!-- frontend/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAB System - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#1E40AF',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold text-gray-900">MAB System</h1>
+                    <span class="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">MVP</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="user-name" class="text-sm text-gray-700">Loading...</span>
+                    <button onclick="logout()" class="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        
+        <!-- Loading State -->
+        <div id="loading" class="flex items-center justify-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span class="ml-2 text-gray-600">Loading dashboard...</span>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-state" class="hidden">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                <p class="text-red-800">Failed to load dashboard. Please refresh the page.</p>
+                <button onclick="location.reload()" class="mt-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                    Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div id="dashboard-content" class="hidden">
+            
+            <!-- Stats Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Active Experiments</h3>
+                    <div class="mt-2 flex items-baseline">
+                        <p id="active-experiments" class="text-3xl font-bold text-gray-900">-</p>
+                        <span class="ml-2 text-sm text-gray-500">running</span>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Users</h3>
+                    <div class="mt-2 flex items-baseline">
+                        <p id="total-users" class="text-3xl font-bold text-gray-900">-</p>
+                        <span class="ml-2 text-sm text-gray-500">assigned</span>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Avg Conversion Rate</h3>
+                    <div class="mt-2 flex items-baseline">
+                        <p id="avg-conversion" class="text-3xl font-bold text-gray-900">-</p>
+                        <span class="ml-2 text-sm text-gray-500">%</span>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Est. Revenue Impact</h3>
+                    <div class="mt-2 flex items-baseline">
+                        <p id="revenue-impact" class="text-3xl font-bold text-success">-</p>
+                        <span class="ml-2 text-sm text-gray-500">USD</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="mb-8">
+                <div class="bg-gradient-to-r from-primary to-secondary p-6 rounded-lg text-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xl font-semibold">Ready to optimize?</h2>
+                            <p class="text-blue-100 mt-1">Create your first A/B test in under 2 minutes</p>
+                        </div>
+                        <button onclick="createNewExperiment()" 
+                                class="bg-white text-primary px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                            Create Experiment
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Experiments List -->
+            <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900">Your Experiments</h2>
+                        <p class="text-sm text-gray-500 mt-1">Manage and monitor your A/B tests</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <select id="status-filter" onchange="filterExperiments()" 
+                                class="px-3 py-2 border border-gray-300 rounded-md text-sm">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="draft">Draft</option>
+                            <option value="paused">Paused</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                        <button onclick="refreshExperiments()" 
+                                class="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="experiments-list">
+                    <!-- Experiments will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create Experiment Modal -->
+    <div id="create-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Create New Experiment</h3>
+            
+            <form id="create-form">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Experiment Name</label>
+                        <input type="text" id="experiment-name" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
+                               placeholder="e.g. Landing Page Headline Test">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
+                        <textarea id="experiment-description" rows="3"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary"
+                                  placeholder="Brief description of what you're testing..."></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Variants</label>
+                        <div id="variants-container">
+                            <div class="variant-item mb-3 p-3 border border-gray-200 rounded-md">
+                                <input type="text" class="variant-name w-full px-3 py-2 border border-gray-300 rounded-md mb-2" 
+                                       placeholder="Variant A (Control)" required>
+                                <textarea class="variant-content w-full px-3 py-2 border border-gray-300 rounded-md" 
+                                          rows="2" placeholder="Content or description..."></textarea>
+                            </div>
+                            
+                            <div class="variant-item mb-3 p-3 border border-gray-200 rounded-md">
+                                <input type="text" class="variant-name w-full px-3 py-2 border border-gray-300 rounded-md mb-2" 
+                                       placeholder="Variant B" required>
+                                <textarea class="variant-content w-full px-3 py-2 border border-gray-300 rounded-md" 
+                                          rows="2" placeholder="Content or description..."></textarea>
+                            </div>
+                        </div>
+                        
+                        <button type="button" onclick="addVariant()" 
+                                class="text-sm text-primary hover:text-secondary">
+                            + Add Another Variant
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeCreateModal()" 
+                            class="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 text-sm bg-primary text-white rounded-md hover:bg-secondary">
+                        Create Experiment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/frontend/assets/app.js"></script>
+</body>
+</html>
+
+<!-- frontend/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - MAB System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#1E40AF'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full space-y-8 px-4">
+        <!-- Header -->
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-900">MAB System</h1>
+            <p class="mt-2 text-gray-600">Multi-Armed Bandit A/B Testing</p>
+        </div>
+
+        <!-- Auth Tabs -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex border-b border-gray-200 mb-6">
+                <button id="login-tab" onclick="switchTab('login')" 
+                        class="tab-button flex-1 py-2 px-4 text-center border-b-2 border-primary text-primary font-medium">
+                    Login
+                </button>
+                <button id="register-tab" onclick="switchTab('register')" 
+                        class="tab-button flex-1 py-2 px-4 text-center border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                    Register
+                </button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="login-email" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="login-password" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                </div>
+                
+                <button onclick="handleLogin()" 
+                        class="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-secondary transition-colors">
+                    Login
+                </button>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-form" class="hidden space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input type="text" id="register-name" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="register-email" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="register-password" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary focus:border-primary">
+                    <p class="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
+                </div>
+                
+                <button onclick="handleRegister()" 
+                        class="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-secondary transition-colors">
+                    Create Account
+                </button>
+            </div>
+        </div>
+
+        <!-- Error/Success Messages -->
+        <div id="message" class="hidden p-4 rounded-md text-center"></div>
+    </div>
+
+    <script src="/static/frontend/assets/auth.js"></script>
+</body>
+</html>

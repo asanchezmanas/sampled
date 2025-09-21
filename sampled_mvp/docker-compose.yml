@@ -1,0 +1,35 @@
+# docker-compose.yml - For local development
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://mab_user:mab_password@postgres:5432/mab_system
+      - JWT_SECRET=local-development-secret-key
+      - ENV=development
+      - LOG_LEVEL=DEBUG
+      - DEBUG=true
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+      - /app/__pycache__
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: mab_system
+      POSTGRES_USER: mab_user
+      POSTGRES_PASSWORD: mab_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

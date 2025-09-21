@@ -1,0 +1,28 @@
+# render.yaml - Render deployment configuration
+services:
+  - type: web
+    name: mab-mvp
+    runtime: python
+    plan: starter  # Free tier initially
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mab-postgres
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DEBUG
+        value: false
+    healthCheckPath: /health
+    
+databases:
+  - name: mab-postgres
+    databaseName: mab_system
+    user: mab_user
+    plan: starter  # Free PostgreSQL tier
