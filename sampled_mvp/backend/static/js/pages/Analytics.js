@@ -400,7 +400,241 @@ class AnalyticsPage {
     
     showLineTooltip(x, y, data, key) {
         this.showTooltip(x, y, `
-            <div class="text-xs font-medium">${new Date(data.date).toLocaleDateString()}</div>
+            <div class="text-xs">Visitors: ${data.visitors.toLocaleString()}</div>
+        `);
+    }
+    
+    showTooltip(x, y, content) {
+        let tooltip = document.getElementById('chart-tooltip');
+        if (!tooltip) {
+            tooltip = document.createElement('div');
+            tooltip.id = 'chart-tooltip';
+            tooltip.className = 'absolute bg-gray-900 text-white text-xs rounded-lg px-3 py-2 pointer-events-none z-50 shadow-lg';
+            document.body.appendChild(tooltip);
+        }
+        
+        tooltip.innerHTML = content;
+        tooltip.classList.remove('hidden');
+        
+        // Position tooltip
+        const rect = tooltip.getBoundingClientRect();
+        const containerRect = document.querySelector('.card').getBoundingClientRect();
+        
+        tooltip.style.left = (containerRect.left + x - rect.width / 2) + 'px';
+        tooltip.style.top = (containerRect.top + y - rect.height - 10) + 'px';
+    }
+    
+    hideTooltip() {
+        const tooltip = document.getElementById('chart-tooltip');
+        if (tooltip) {
+            tooltip.classList.add('hidden');
+        }
+    }
+    
+    // ===== EVENT HANDLERS =====
+    
+    async handleDateRangeChange() {
+        if (this.dateRange === 'custom') {
+            this.showCustomDatePicker();
+            return;
+        }
+        
+        try {
+            this.app.showLoading(true);
+            
+            const response = await this.app.api.get('/api/analytics', {
+                date_range: this.dateRange
+            });
+            
+            if (response.success) {
+                this.analyticsData = response.data;
+                this.updateCharts();
+                this.updateStats();
+            }
+            
+        } catch (error) {
+            this.app.handleAPIError(error);
+        } finally {
+            this.app.showLoading(false);
+        }
+    }
+    
+    updatePerformanceChart() {
+        const performanceData = this.generatePerformanceDataForMetric(this.performanceMetric);
+        const container = document.getElementById('performance-chart');
+        
+        if (container && this.charts.performance) {
+            this.renderBarChart(container, performanceData, 'performance');
+        }
+    }
+    
+    generatePerformanceDataForMetric(metric) {
+        // In a real app, this would fetch different data based on the metric
+        const baseData = this.generatePerformanceData();
+        
+        switch (metric) {
+            case 'revenue':
+                return baseData.map(d => ({
+                    ...d,
+                    lift: d.lift * 1.2 + (Math.random() - 0.5) * 5
+                }));
+            case 'engagement':
+                return baseData.map(d => ({
+                    ...d,
+                    lift: d.lift * 0.8 + (Math.random() - 0.5) * 8
+                }));
+            default:
+                return baseData;
+        }
+    }
+    
+    updateCharts() {
+        // Regenerate and update charts with new data
+        this.initConversionTrendsChart();
+        this.updatePerformanceChart();
+    }
+    
+    updateStats() {
+        // Update overview stats based on new date range
+        // This would typically come from the API response
+    }
+    
+    handleDataUpdate(data) {
+        this.analyticsData = { ...this.analyticsData, ...data };
+        this.updateCharts();
+        this.updateStats();
+    }
+    
+    // ===== CUSTOM DATE PICKER =====
+    
+    showCustomDatePicker() {
+        // Placeholder for custom date picker modal
+        this.app.showToast('Custom date picker coming soon!', 'info');
+        
+        // Reset to 30 days for now
+        const dateRangeSelect = document.getElementById('date-range-select');
+        if (dateRangeSelect) {
+            dateRangeSelect.value = '30_days';
+            this.dateRange = '30_days';
+        }
+    }
+    
+    // ===== EXPORT FUNCTIONALITY =====
+    
+    exportAnalytics() {
+        try {
+            // Prepare export data
+            const exportData = {
+                overview: this.analyticsData?.overview || {},
+                trends: this.charts['conversion-trends']?.data || [],
+                performance: this.charts['performance']?.data || [],
+                date_range: this.dateRange,
+                exported_at: new Date().toISOString()
+            };
+            
+            // Create and download JSON report
+            const jsonContent = JSON.stringify(exportData, null, 2);
+            this.downloadFile(jsonContent, 'analytics-report.json', 'application/json');
+            
+            this.app.showToast('Analytics report exported successfully!', 'success');
+            
+        } catch (error) {
+            this.app.showToast('Failed to export analytics report', 'error');
+        }
+    }
+    
+    downloadFile(content, filename, contentType) {
+        const blob = new Blob([content], { type: contentType });
+        const link = document.createElement('a');
+        
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+    }
+    
+    // ===== REFRESH DATA =====
+    
+    async refreshAnalytics() {
+        try {
+            this.app.showLoading(true);
+            
+            const response = await this.app.api.get('/api/analytics/refresh', {
+                date_range: this.dateRange
+            });
+            
+            if (response.success) {
+                this.analyticsData = response.data;
+                this.updateCharts();
+                this.updateStats();
+                this.app.showToast('Analytics data refreshed!', 'success');
+            }
+            
+        } catch (error) {
+            this.app.handleAPIError(error);
+        } finally {
+            this.app.showLoading(false);
+        }
+    }
+    
+    // ===== RESIZE HANDLING =====
+    
+    handleResize() {
+        // Redraw charts on window resize
+        Object.keys(this.charts).forEach(chartId => {
+            const chart = this.charts[chartId];
+            if (chart && chart.container) {
+                if (chartId === 'conversion-trends') {
+                    this.renderLineChart(chart.container, chart.data, chartId);
+                } else if (chartId === 'performance') {
+                    this.renderBarChart(chart.container, chart.data, chartId);
+                }
+            }
+        });
+    }
+    
+    // ===== CLEANUP =====
+    
+    destroy() {
+        // Remove tooltips
+        const tooltip = document.getElementById('chart-tooltip');
+        if (tooltip) {
+            tooltip.remove();
+        }
+        
+        // Clear charts
+        this.charts = {};
+        
+        // Remove resize listener
+        window.removeEventListener('resize', this.handleResize.bind(this));
+        
+        console.log('Analytics page destroyed');
+    }
+}
+
+// Extend MAB app with analytics-specific methods
+if (window.MAB) {
+    window.MAB.exportAnalytics = function() {
+        if (window.analyticsPage) {
+            window.analyticsPage.exportAnalytics();
+        }
+    };
+    
+    window.MAB.refreshAnalytics = function() {
+        if (window.analyticsPage) {
+            window.analyticsPage.refreshAnalytics();
+        }
+    };
+}
+
+// Make available globally
+window.AnalyticsPage = AnalyticsPage;="text-xs font-medium">${new Date(data.date).toLocaleDateString()}</div>
             <div class="text-xs">${key === 'control' ? 'Control' : 'Variants'}: ${data[key].toFixed(2)}%</div>
             <div class="text-xs">Visitors: ${data.visitors.toLocaleString()}</div>
         `);
