@@ -176,4 +176,267 @@
 </div>
 
 <!-- Experiments Grid -->
-<div id="experiments-
+<div id="experiments-container">
+    <!-- Grid View -->
+    <div id="experiments-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {% for experiment in initial_data.experiments %}
+        <div class="card experiment-card" data-experiment-id="{{ experiment.id }}" data-status="{{ experiment.status }}">
+            <div class="card-body">
+                <!-- Header -->
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900 mb-1 cursor-pointer hover:text-brand-600 transition-colors" 
+                            onclick="MAB.viewExperiment('{{ experiment.id }}')">
+                            {{ experiment.name }}
+                        </h3>
+                        <p class="text-sm text-gray-500">{{ experiment.url | urlparse }}</p>
+                        <p class="text-xs text-gray-400 mt-1">{{ experiment.created_at | timeago }}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="badge badge-{{ experiment.status }}">
+                            {{ experiment.status | title }}
+                        </span>
+                        <div class="relative">
+                            <button onclick="MAB.toggleExperimentMenu('{{ experiment.id }}')" 
+                                    class="p-1 hover:bg-gray-100 rounded">
+                                <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                                </svg>
+                            </button>
+                            <!-- Dropdown menu will be added by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="text-center">
+                        <div class="text-lg font-bold text-gray-900" data-live-metric="visitors-{{ experiment.id }}">
+                            {{ experiment.stats.total_users | default(0) | number_format }}
+                        </div>
+                        <div class="text-xs text-gray-500">Visitors</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-lg font-bold text-gray-900" data-live-metric="conversion-{{ experiment.id }}">
+                            {{ (experiment.stats.conversion_rate * 100) | round(1) if experiment.stats.conversion_rate else '0.0' }}%
+                        </div>
+                        <div class="text-xs text-gray-500">Conversion</div>
+                    </div>
+                </div>
+
+                {% if experiment.status == 'active' %}
+                <!-- Progress Bar -->
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs text-gray-500">Confidence</span>
+                        <span class="text-xs font-medium text-gray-700" data-live-metric="confidence-{{ experiment.id }}">
+                            {{ experiment.stats.confidence | default(0) | round }}%
+                        </span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-brand-500 h-2 rounded-full transition-all duration-300" 
+                             style="width: {{ experiment.stats.confidence | default(0) }}%"></div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Variants Preview -->
+                {% if experiment.arms %}
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 mb-2">Variants ({{ experiment.arms | length }})</div>
+                    <div class="flex gap-1">
+                        {% for arm in experiment.arms[:4] %}
+                        <div class="flex-1 h-2 rounded" 
+                             style="background-color: {{ ['#465fff', '#12b76a', '#f79009', '#ef4444'][loop.index0] }}"></div>
+                        {% endfor %}
+                        {% if experiment.arms | length > 4 %}
+                        <div class="text-xs text-gray-400 ml-1">+{{ experiment.arms | length - 4 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Actions -->
+                <div class="flex gap-2">
+                    <button onclick="MAB.viewExperiment('{{ experiment.id }}')" 
+                            class="flex-1 btn btn-sm btn-secondary">
+                        View Details
+                    </button>
+                    {% if experiment.status == 'draft' %}
+                        <button data-action="start-experiment" data-target="{{ experiment.id }}" 
+                                class="flex-1 btn btn-sm btn-primary">
+                            Start Test
+                        </button>
+                    {% elif experiment.status == 'active' %}
+                        <button data-action="pause-experiment" data-target="{{ experiment.id }}" 
+                                class="flex-1 btn btn-sm btn-secondary">
+                            Pause
+                        </button>
+                    {% elif experiment.status == 'paused' %}
+                        <button data-action="start-experiment" data-target="{{ experiment.id }}" 
+                                class="flex-1 btn btn-sm btn-primary">
+                            Resume
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-span-full">
+            <div class="text-center py-12">
+                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                </svg>
+                <h3 class="text-xl font-medium text-gray-900 mb-2">No experiments found</h3>
+                <p class="text-gray-500 mb-6">Get started by creating your first A/B test experiment</p>
+                <button onclick="MAB.createExperiment()" class="btn btn-primary">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Create Your First Test
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- List View (Hidden by default) -->
+    <div id="experiments-list" class="hidden">
+        <div class="card">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Experiment
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Visitors
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Conversion
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Confidence
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Created
+                            </th>
+                            <th class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for experiment in initial_data.experiments %}
+                        <tr class="hover:bg-gray-50" data-experiment-id="{{ experiment.id }}">
+                            <td class="px-6 py-4">
+                                <div>
+                                    <div class="font-medium text-gray-900 cursor-pointer hover:text-brand-600 transition-colors"
+                                         onclick="MAB.viewExperiment('{{ experiment.id }}')">
+                                        {{ experiment.name }}
+                                    </div>
+                                    <div class="text-sm text-gray-500">{{ experiment.url | urlparse }}</div>
+                                    {% if experiment.description %}
+                                    <div class="text-xs text-gray-400 mt-1">{{ experiment.description | truncate(60) }}</div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="badge badge-{{ experiment.status }}">
+                                    {{ experiment.status | title }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-900" data-live-metric="visitors-{{ experiment.id }}">
+                                {{ experiment.stats.total_users | default(0) | number_format }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-900" data-live-metric="conversion-{{ experiment.id }}">
+                                {{ (experiment.stats.conversion_rate * 100) | round(1) if experiment.stats.conversion_rate else '0.0' }}%
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-900" data-live-metric="confidence-{{ experiment.id }}">
+                                {% if experiment.status == 'active' %}
+                                    {{ experiment.stats.confidence | default(0) | round }}%
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-500">
+                                {{ experiment.created_at | timeago }}
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    <button onclick="MAB.viewExperiment('{{ experiment.id }}')" 
+                                            class="btn btn-sm btn-secondary">
+                                        View
+                                    </button>
+                                    {% if experiment.status == 'draft' %}
+                                        <button data-action="start-experiment" data-target="{{ experiment.id }}" 
+                                                class="btn btn-sm btn-primary">
+                                            Start
+                                        </button>
+                                    {% elif experiment.status == 'active' %}
+                                        <button data-action="pause-experiment" data-target="{{ experiment.id }}" 
+                                                class="btn btn-sm btn-secondary">
+                                            Pause
+                                        </button>
+                                    {% elif experiment.status == 'paused' %}
+                                        <button data-action="start-experiment" data-target="{{ experiment.id }}" 
+                                                class="btn btn-sm btn-primary">
+                                                Resume
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if initial_data.experiments | length > 0 %}
+<div class="flex items-center justify-between mt-8">
+    <div class="text-sm text-gray-500">
+        Showing <span class="font-medium">1</span> to <span class="font-medium">{{ initial_data.experiments | length }}</span> of <span class="font-medium">{{ initial_data.total_count }}</span> experiments
+    </div>
+    
+    <div class="flex gap-2">
+        <button class="btn btn-sm btn-secondary" disabled>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Previous
+        </button>
+        <button class="btn btn-sm btn-secondary" disabled>
+            Next
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+    </div>
+</div>
+{% endif %}
+
+<!-- Experiment Menu Modal (will be populated by JS) -->
+<div id="experiment-menu-modal" class="hidden">
+    <!-- Menu content will be added dynamically -->
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/pages/Experiments.js"></script>
+<script>
+    // Initialize experiments page when loaded
+    function initializePage() {
+        if (typeof ExperimentsPage !== 'undefined') {
+            window.experimentsPage = new ExperimentsPage();
+        }
+    }
+</script>
+{% endblock %}
