@@ -1,0 +1,279 @@
+<!-- backend/templates/pages/register.html -->
+{% extends "base.html" %}
+
+{% block title %}Create Account - MAB System{% endblock %}
+
+{% block public_content %}
+<div class="min-h-screen flex">
+    <!-- Left Side - Form -->
+    <div class="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24">
+        <div class="mx-auto w-full max-w-sm lg:w-96">
+            <div>
+                <!-- Logo -->
+                <div class="flex items-center gap-3 mb-8">
+                    <svg class="w-8 h-8 text-brand-500" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                    <span class="text-xl font-bold text-gray-900">MAB System</span>
+                </div>
+                
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">
+                    Create your account
+                </h2>
+                <p class="text-sm text-gray-600 mb-8">
+                    Start optimizing your conversions with scientifically robust A/B testing.
+                </p>
+            </div>
+
+            <!-- Registration Form -->
+            <form id="register-form" data-action="register" class="space-y-6">
+                <!-- Name Field -->
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Full name
+                    </label>
+                    <input id="name" 
+                           name="name" 
+                           type="text" 
+                           autocomplete="name" 
+                           required 
+                           minlength="2"
+                           class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                           placeholder="Enter your full name">
+                    <div id="name-error" class="hidden mt-1 text-sm text-error-600"></div>
+                </div>
+
+                <!-- Email Field -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                        Email address
+                    </label>
+                    <input id="email" 
+                           name="email" 
+                           type="email" 
+                           autocomplete="email" 
+                           required 
+                           class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                           placeholder="Enter your email address">
+                    <div id="email-error" class="hidden mt-1 text-sm text-error-600"></div>
+                </div>
+
+                <!-- Company Field (Optional) -->
+                <div>
+                    <label for="company" class="block text-sm font-medium text-gray-700 mb-2">
+                        Company <span class="text-gray-400 text-xs">(optional)</span>
+                    </label>
+                    <input id="company" 
+                           name="company" 
+                           type="text" 
+                           autocomplete="organization" 
+                           class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                           placeholder="Your company name">
+                </div>
+
+                <!-- Password Field -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                        Password
+                    </label>
+                    <div class="relative">
+                        <input id="password" 
+                               name="password" 
+                               type="password" 
+                               autocomplete="new-password" 
+                               required 
+                               minlength="8"
+                               class="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                               placeholder="Create a secure password">
+                        <button type="button" 
+                                id="toggle-password"
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                            <svg id="eye-closed" class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/>
+                            </svg>
+                            <svg id="eye-open" class="h-4 w-4 text-gray-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="password-error" class="hidden mt-1 text-sm text-error-600"></div>
+                    
+                    <!-- Password Strength Indicator -->
+                    <div id="password-strength" class="mt-2 hidden">
+                        <div class="text-xs text-gray-600 mb-1">Password strength</div>
+                        <div class="flex space-x-1">
+                            <div class="h-2 w-1/4 bg-gray-200 rounded-full">
+                                <div id="strength-bar-1" class="h-full rounded-full transition-colors"></div>
+                            </div>
+                            <div class="h-2 w-1/4 bg-gray-200 rounded-full">
+                                <div id="strength-bar-2" class="h-full rounded-full transition-colors"></div>
+                            </div>
+                            <div class="h-2 w-1/4 bg-gray-200 rounded-full">
+                                <div id="strength-bar-3" class="h-full rounded-full transition-colors"></div>
+                            </div>
+                            <div class="h-2 w-1/4 bg-gray-200 rounded-full">
+                                <div id="strength-bar-4" class="h-full rounded-full transition-colors"></div>
+                            </div>
+                        </div>
+                        <div id="strength-text" class="text-xs mt-1"></div>
+                    </div>
+                </div>
+
+                <!-- Confirm Password Field -->
+                <div>
+                    <label for="confirm-password" class="block text-sm font-medium text-gray-700 mb-2">
+                        Confirm password
+                    </label>
+                    <input id="confirm-password" 
+                           name="confirm_password" 
+                           type="password" 
+                           autocomplete="new-password" 
+                           required 
+                           class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                           placeholder="Confirm your password">
+                    <div id="confirm-password-error" class="hidden mt-1 text-sm text-error-600"></div>
+                </div>
+
+                <!-- Terms and Privacy -->
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        <input id="terms" 
+                               name="terms" 
+                               type="checkbox" 
+                               required
+                               class="h-4 w-4 text-brand-600 focus:ring-brand-500 border-gray-300 rounded">
+                    </div>
+                    <div class="ml-2 text-sm">
+                        <label for="terms" class="text-gray-700">
+                            I agree to the 
+                            <a href="/terms" target="_blank" class="font-medium text-brand-600 hover:text-brand-500">Terms of Service</a>
+                            and 
+                            <a href="/privacy" target="_blank" class="font-medium text-brand-600 hover:text-brand-500">Privacy Policy</a>
+                        </label>
+                        <div id="terms-error" class="hidden mt-1 text-error-600"></div>
+                    </div>
+                </div>
+
+                <!-- Marketing emails (optional) -->
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        <input id="marketing" 
+                               name="marketing" 
+                               type="checkbox" 
+                               class="h-4 w-4 text-brand-600 focus:ring-brand-500 border-gray-300 rounded">
+                    </div>
+                    <div class="ml-2 text-sm">
+                        <label for="marketing" class="text-gray-700">
+                            I want to receive product updates and optimization tips via email
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div>
+                    <button type="submit" 
+                            id="register-button"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        <span id="register-text">Create account</span>
+                        <svg id="register-loading" class="hidden animate-spin -mr-1 ml-3 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Error Message -->
+                <div id="form-error" class="hidden p-3 rounded-lg bg-error-50 border border-error-200">
+                    <div class="flex">
+                        <svg class="h-5 w-5 text-error-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <div class="ml-3">
+                            <p class="text-sm text-error-800" id="form-error-message">
+                                <!-- Error message will be inserted here -->
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Sign in link -->
+            <div class="mt-8">
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300" />
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-gray-50 text-gray-500">Already have an account?</span>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <a href="/login" 
+                       class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors">
+                        Sign in to your account
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side - Benefits -->
+    <div class="hidden lg:block relative w-0 flex-1">
+        <div class="absolute inset-0 h-full w-full bg-gradient-to-br from-success-600 to-success-800 flex items-center justify-center">
+            <div class="max-w-md text-center">
+                <div class="w-32 h-32 mx-auto mb-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                
+                <h3 class="text-2xl font-bold text-white mb-4">
+                    Start Testing in Minutes
+                </h3>
+                <p class="text-success-100 text-lg leading-relaxed mb-8">
+                    Join innovative teams who've increased their conversions by an average of 23% using our Thompson Sampling algorithm.
+                </p>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center text-success-100">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        No credit card required
+                    </div>
+                    <div class="flex items-center text-success-100">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Free 14-day trial
+                    </div>
+                    <div class="flex items-center text-success-100">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Setup in under 10 minutes
+                    </div>
+                </div>
+
+                <div class="mt-8 text-success-100">
+                    <div class="text-sm opacity-90">Trusted by</div>
+                    <div class="text-lg font-semibold">2,500+ websites</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/pages/Register.js"></script>
+<script>
+    function initializePage() {
+        if (typeof RegisterPage !== 'undefined') {
+            window.registerPage = new RegisterPage();
+        }
+    }
+</script>
+{% endblock %}
