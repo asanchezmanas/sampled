@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MAB System - A/B Testing Platform{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/css/main.css">
+    {% block extra_css %}{% endblock %}
+    
+    <!-- Initial Data for JavaScript -->
+    <script id="initial-data" type="application/json">
+        {{ initial_data | tojson if initial_data else '{}' }}
+    </script>
+    
+    <!-- Page Configuration -->
+    <script id="page-config" type="application/json">
+        {
+            "page": "{{ request.url.path }}",
+            "user": {{ user | tojson if user else 'null' }},
+            "csrfToken": "{{ csrf_token() if csrf_token else '' }}"
+        }
+    </script>
+</head>
+<body class="h-full">
+    <div id="app" class="app-layout">
+        
+        {% if user %}
+            <!-- Authenticated Layout -->
+            
+            <!-- Sidebar -->
+            <aside class="sidebar custom-scrollbar" id="sidebar">
+                <!-- Sidebar Header -->
+                <div class="sidebar-header">
+                    <div class="logo-icon">
+                        <svg fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                    <div class="logo">
+                        <span>MAB System</span>
+                        <span class="badge badge-active ml-2">Beta</span>
+                    </div>
+                </div>
+
+                <!-- Navigation Menu -->
+                <nav class="nav-menu">
+                    <!-- Main Menu Group -->
+                    <div class="menu-group">
+                        <div class="menu-group-title">Main</div>
+                        <div class="menu-group-icon"></div>
+                        
+                        <a href="/" class="menu-item {% if request.url.path == '/' %}active{% endif %}">
+                            <svg class="menu-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                            <span class="menu-item-text">Dashboard</span>
+                        </a>
+
+                        <a href="/experiments" class="menu-item {% if '/experiments' in request.url.path %}active{% endif %}">
+                            <svg class="menu-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                            </svg>
+                            <span class="menu-item-text">Experiments</span>
+                        </a>
+
+                        <a href="/analytics" class="menu-item {% if '/analytics' in request.url.path %}active{% endif %}">
+                            <svg class="menu-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                            <span class="menu-item-text">Analytics</span>
+                        </a>
+                    </div>
+
+                    <!-- Tools Group -->
+                    <div class="menu-group">
+                        <div class="menu-group-title">Tools</div>
+                        <div class="menu-group-icon"></div>
+
+                        <a href="/configurator" class="menu-item {% if '/configurator' in request.url.path %}active{% endif %}">
+                            <svg class="menu-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <span class="menu-item-text">Configurator</span>
+                        </a>
+
+                        <a href="/integrations" class="menu-item {% if '/integrations' in request.url.path %}active{% endif %}">
+                            <svg class="menu-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <span class="menu-item-text">Integrations</span>
+                        </a>
+                    </div>
+
+                    <!-- Settings Group -->
+                    <div class="menu-group">
+                        <div class="menu-group-title">Account</div>
+                        <div class="menu-group-icon"></div>
+
+                        <a href="/settings" class="menu-item {% if '/settings' in request.url.path %}active{% endif %}">
+                            <svg class="menu-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                            <span class="menu-item-text">Settings</span>
+                        </a>
+                    </div>
+                </nav>
+            </aside>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Header -->
+                <header class="app-header">
+                    <div class="header-left">
+                        <!-- Mobile Menu Toggle -->
+                        <button class="btn btn-secondary sidebar-toggle hidden" onclick="MAB.toggleMobileSidebar()">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                            </svg>
+                        </button>
+
+                        <!-- Breadcrumb -->
+                        <nav class="breadcrumb">
+                            {% block breadcrumb %}
+                                <span class="text-gray-500">Dashboard</span>
+                            {% endblock %}
+                        </nav>
+                    </div>
+
+                    <div class="header-right">
+                        <!-- Create New Test Button -->
+                        <button onclick="MAB.createExperiment()" class="btn btn-primary">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            <span>New Test</span>
+                        </button>
+
+                        <!-- Notifications -->
+                        <div class="relative">
+                            <button class="btn btn-secondary" onclick="MAB.toggleNotifications()">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM12 3v9l4-4M7 13l4-4"/>
+                                </svg>
+                            </button>
+                            <!-- Notification badge -->
+                            <span class="absolute -top-1 -right-1 h-3 w-3 bg-error-500 rounded-full"></span>
+                        </div>
+
+                        <!-- User Menu -->
+                        <div class="relative" data-component="dropdown">
+                            <button class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-all" onclick="MAB.toggleUserMenu()">
+                                <img class="w-8 h-8 rounded-full border-2 border-gray-200" 
+                                     src="{{ user.avatar_url or 'https://ui-avatars.com/api/?name=' + (user.name | urlencode) + '&background=465fff&color=fff' }}" 
+                                     alt="{{ user.name }}">
+                                <div class="hidden">
+                                    <div class="text-sm font-medium text-gray-900">{{ user.name }}</div>
+                                    <div class="text-xs text-gray-500">{{ user.email }}</div>
+                                </div>
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+
+                            <!-- User Dropdown Menu -->
+                            <div class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 hidden" id="user-menu">
+                                <div class="py-2">
+                                    <div class="px-4 py-3 border-b border-gray-100">
+                                        <div class="font-medium text-gray-900">{{ user.name }}</div>
+                                        <div class="text-sm text-gray-500">{{ user.email }}</div>
+                                    </div>
+                                    
+                                    <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                            </svg>
+                                            Profile
+                                        </div>
+                                    </a>
+                                    
+                                    <a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            </svg>
+                                            Settings
+                                        </div>
+                                    </a>
+                                    
+                                    <div class="border-t border-gray-100 mt-1 pt-1">
+                                        <button onclick="MAB.logout()" class="w-full text-left px-4 py-2 text-sm text-error-700 hover:bg-error-50">
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                                </svg>
+                                                Sign out
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Page Content -->
+                <main class="page-content">
+                    {% block content %}
+                    <!-- Page content will be inserted here -->
+                    {% endblock %}
+                </main>
+            </div>
+
+        {% else %}
+            <!-- Public/Unauthenticated Layout -->
+            <div class="min-h-screen flex flex-col bg-white">
+                <!-- Simple Header for Public Pages -->
+                <header class="border-b border-gray-200">
+                    <div class="mx-auto max-w-7xl px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-8 h-8 text-brand-500" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                </svg>
+                                <span class="text-xl font-bold text-gray-900">MAB System</span>
+                                <span class="badge badge-active">Beta</span>
+                            </div>
+                            
+                            <div class="flex items-center gap-4">
+                                <a href="/login" class="btn btn-secondary">Sign In</a>
+                                <a href="/register" class="btn btn-primary">Get Started</a>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Public Content -->
+                <main class="flex-1">
+                    {% block public_content %}
+                    <!-- Public page content will be inserted here -->
+                    {% endblock %}
+                </main>
+
+                <!-- Simple Footer -->
+                <footer class="border-t border-gray-200 bg-gray-50">
+                    <div class="mx-auto max-w-7xl px-6 py-8">
+                        <div class="text-center text-sm text-gray-500">
+                            <p>&copy; 2024 MAB System. Built for modern A/B testing.</p>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 shadow-xl">
+            <div class="flex items-center gap-3">
+                <div class="animate-spin rounded-full h-6 w-6 border-2 border-brand-500 border-t-transparent"></div>
+                <span class="text-gray-700">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Core -->
+    <script src="/static/js/core/utils.js"></script>
+    <script src="/static/js/core/state.js"></script>
+    <script src="/static/js/core/api.js"></script>
+    <script src="/static/js/core/app.js"></script>
+
+    <!-- Page-specific JavaScript -->
+    {% block scripts %}{% endblock %}
+
+    <!-- Initialize App -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                // Parse initial data
+                const initialDataEl = document.getElementById('initial-data');
+                const pageConfigEl = document.getElementById('page-config');
+                
+                const initialData = initialDataEl ? JSON.parse(initialDataEl.textContent) : {};
+                const pageConfig = pageConfigEl ? JSON.parse(pageConfigEl.textContent) : {};
+                
+                // Initialize the application
+                window.MAB = new MABApp({
+                    initialData: initialData,
+                    user: pageConfig.user,
+                    csrfToken: pageConfig.csrfToken,
+                    currentPage: pageConfig.page
+                });
+                
+                // Initialize page-specific features
+                if (typeof initializePage === 'function') {
+                    initializePage();
+                }
+                
+                console.log('MAB System initialized');
+                
+            } catch (error) {
+                console.error('Failed to initialize MAB System:', error);
+            }
+        });
+    </script>
+
+    <!-- Development Tools (only in development) -->
+    {% if config.ENV == 'development' %}
+    <script>
+        // Development helpers
+        window.MAB_DEV = {
+            state: () => window.MAB?.state?.getAll(),
+            api: () => window.MAB?.api,
+            reload: () => location.reload()
+        };
+        console.log('Development mode active. Use MAB_DEV for debugging.');
+    </script>
+    {% endif %}
+</body>
+</html>
