@@ -1,0 +1,403 @@
+<!-- backend/templates/pages/configurator.html -->
+{% extends "base.html" %}
+
+{% block title %}Visual Configurator - MAB System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .configurator-layout {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        height: calc(100vh - 72px);
+    }
+    
+    .configurator-sidebar {
+        background: white;
+        border-right: 1px solid #e4e7ec;
+        overflow-y: auto;
+    }
+    
+    .configurator-main {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .website-iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        transform-origin: top left;
+        transition: transform 0.3s ease;
+    }
+    
+    .element-highlight {
+        position: absolute;
+        pointer-events: none;
+        border: 2px solid #465fff;
+        background: rgba(70, 95, 255, 0.1);
+        z-index: 10000;
+        transition: all 0.2s ease;
+    }
+    
+    .element-tooltip {
+        position: absolute;
+        background: #1f2937;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        z-index: 10001;
+        pointer-events: none;
+        white-space: nowrap;
+    }
+    
+    .zoom-controls {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: white;
+        border: 1px solid #e4e7ec;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        overflow: hidden;
+    }
+    
+    .device-frame {
+        max-width: 100%;
+        margin: 0 auto;
+        background: white;
+        box-shadow: 0 0 0 8px #f3f4f6, 0 0 30px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .device-frame.mobile {
+        width: 375px;
+        height: 812px;
+    }
+    
+    .device-frame.tablet {
+        width: 768px;
+        height: 1024px;
+    }
+    
+    .device-frame.desktop {
+        width: 1200px;
+        height: 800px;
+    }
+    
+    .variant-preview {
+        border: 1px solid #e4e7ec;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .variant-preview:hover {
+        border-color: #465fff;
+        box-shadow: 0 0 0 3px rgba(70, 95, 255, 0.1);
+    }
+    
+    .variant-preview.active {
+        border-color: #465fff;
+        box-shadow: 0 0 0 3px rgba(70, 95, 255, 0.15);
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<div class="flex items-center gap-2 text-sm">
+    <a href="/" class="text-gray-500 hover:text-gray-700">Dashboard</a>
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+    </svg>
+    <span class="text-gray-900 font-medium">Visual Configurator</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="configurator-layout">
+    <!-- Sidebar -->
+    <div class="configurator-sidebar">
+        <!-- Header -->
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">Visual Editor</h2>
+            <p class="text-sm text-gray-600">Create A/B tests without code</p>
+        </div>
+        
+        <!-- URL Input -->
+        <div class="p-6 border-b border-gray-200">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Website URL</label>
+            <div class="flex gap-2">
+                <input type="url" 
+                       id="website-url" 
+                       placeholder="https://example.com" 
+                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                <button onclick="MAB.loadWebsite()" class="btn btn-primary btn-sm">
+                    Load
+                </button>
+            </div>
+        </div>
+        
+        <!-- Device Selector -->
+        <div class="p-6 border-b border-gray-200">
+            <label class="block text-sm font-medium text-gray-700 mb-3">Device Preview</label>
+            <div class="flex gap-1 bg-gray-100 p-1 rounded-lg">
+                <button onclick="MAB.setDevice('desktop')" 
+                        class="device-btn flex-1 py-2 px-3 text-xs font-medium rounded active" 
+                        data-device="desktop">
+                    <svg class="w-4 h-4 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    Desktop
+                </button>
+                <button onclick="MAB.setDevice('tablet')" 
+                        class="device-btn flex-1 py-2 px-3 text-xs font-medium rounded" 
+                        data-device="tablet">
+                    <svg class="w-4 h-4 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                    Tablet
+                </button>
+                <button onclick="MAB.setDevice('mobile')" 
+                        class="device-btn flex-1 py-2 px-3 text-xs font-medium rounded" 
+                        data-device="mobile">
+                    <svg class="w-4 h-4 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                    Mobile
+                </button>
+            </div>
+        </div>
+        
+        <!-- Element Inspector -->
+        <div class="p-6 border-b border-gray-200" id="element-inspector" style="display: none;">
+            <h3 class="text-sm font-medium text-gray-900 mb-3">Selected Element</h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Element Type</label>
+                    <div class="px-3 py-2 bg-gray-50 rounded text-xs text-gray-600" id="element-type">
+                        -
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Current Text</label>
+                    <div class="px-3 py-2 bg-gray-50 rounded text-xs text-gray-600" id="element-text">
+                        -
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">CSS Selector</label>
+                    <div class="px-3 py-2 bg-gray-50 rounded text-xs text-gray-600 font-mono" id="element-selector">
+                        -
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Variants -->
+        <div class="p-6" id="variants-panel" style="display: none;">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-medium text-gray-900">Variants</h3>
+                <button onclick="MAB.addVariant()" class="btn btn-sm btn-primary">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Add
+                </button>
+            </div>
+            
+            <!-- Control Variant -->
+            <div class="variant-preview active" data-variant="control">
+                <div class="px-3 py-2 bg-gray-50 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-medium text-gray-700">Control (Original)</span>
+                        <span class="badge badge-active">Original</span>
+                    </div>
+                </div>
+                <div class="p-3 text-xs text-gray-600">
+                    <div>Traffic: 50%</div>
+                    <div>Status: Active</div>
+                </div>
+            </div>
+            
+            <!-- Variant List -->
+            <div id="variant-list">
+                <!-- Variants will be added dynamically -->
+            </div>
+        </div>
+        
+        <!-- Experiment Settings -->
+        <div class="p-6 border-t border-gray-200" id="experiment-settings" style="display: none;">
+            <h3 class="text-sm font-medium text-gray-900 mb-3">Experiment Settings</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Experiment Name</label>
+                    <input type="text" 
+                           id="experiment-name" 
+                           placeholder="My A/B Test" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Traffic Split</label>
+                    <div class="grid grid-cols-2 gap-2" id="traffic-split">
+                        <div class="text-center">
+                            <input type="number" 
+                                   value="50" 
+                                   min="0" 
+                                   max="100" 
+                                   class="w-full px-2 py-1 border border-gray-300 rounded text-xs text-center">
+                            <label class="text-xs text-gray-500 mt-1">Control</label>
+                        </div>
+                        <div class="text-center">
+                            <input type="number" 
+                                   value="50" 
+                                   min="0" 
+                                   max="100" 
+                                   class="w-full px-2 py-1 border border-gray-300 rounded text-xs text-center">
+                            <label class="text-xs text-gray-500 mt-1">Variant</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-2">Goals</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" checked class="rounded text-brand-500 focus:ring-brand-500">
+                            <span class="ml-2 text-xs text-gray-600">Click tracking</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="rounded text-brand-500 focus:ring-brand-500">
+                            <span class="ml-2 text-xs text-gray-600">Conversion tracking</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="flex gap-2 pt-2">
+                    <button onclick="MAB.saveExperiment()" class="flex-1 btn btn-primary btn-sm">
+                        Save Test
+                    </button>
+                    <button onclick="MAB.previewExperiment()" class="flex-1 btn btn-secondary btn-sm">
+                        Preview
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Area -->
+    <div class="configurator-main">
+        <!-- Zoom Controls -->
+        <div class="zoom-controls">
+            <button onclick="MAB.zoomOut()" class="px-3 py-2 border-r border-gray-200 hover:bg-gray-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                </svg>
+            </button>
+            <span class="px-3 py-2 text-sm font-medium border-r border-gray-200" id="zoom-level">100%</span>
+            <button onclick="MAB.zoomIn()" class="px-3 py-2 border-r border-gray-200 hover:bg-gray-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+            </button>
+            <button onclick="MAB.fitToScreen()" class="px-3 py-2 hover:bg-gray-50">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"/>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Website Container -->
+        <div class="flex items-center justify-center h-full p-4 bg-gray-100" id="website-container">
+            <!-- Empty State -->
+            <div class="text-center" id="empty-state">
+                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+                </svg>
+                <h3 class="text-xl font-medium text-gray-900 mb-2">No Website Loaded</h3>
+                <p class="text-gray-500 mb-6 max-w-md">Enter a website URL in the sidebar to start creating your A/B test with the visual editor.</p>
+                <div class="space-y-2 text-sm text-gray-400">
+                    <p>• Select elements by clicking on them</p>
+                    <p>• Create variants with different content</p>
+                    <p>• Preview changes before going live</p>
+                </div>
+            </div>
+            
+            <!-- Device Frame (hidden initially) -->
+            <div class="device-frame desktop hidden" id="device-frame">
+                <iframe id="website-iframe" class="website-iframe" src="about:blank"></iframe>
+            </div>
+        </div>
+        
+        <!-- Element Overlay (for highlighting) -->
+        <div id="element-overlay" style="display: none;"></div>
+    </div>
+</div>
+
+<!-- Variant Editor Modal -->
+<div id="variant-editor-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Edit Variant</h3>
+        </div>
+        <div class="p-6">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Variant Name</label>
+                    <input type="text" 
+                           id="variant-name-input" 
+                           placeholder="Variant A" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">New Content</label>
+                    <textarea id="variant-content-input" 
+                              rows="4" 
+                              placeholder="Enter new text or HTML content..." 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Traffic Allocation</label>
+                    <div class="flex items-center gap-2">
+                        <input type="range" 
+                               id="variant-traffic-input" 
+                               min="10" 
+                               max="90" 
+                               value="50" 
+                               class="flex-1">
+                        <span class="text-sm text-gray-600 min-w-8" id="traffic-percent">50%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
+            <button onclick="MAB.closeVariantEditor()" class="btn btn-secondary">
+                Cancel
+            </button>
+            <button onclick="MAB.saveVariant()" class="btn btn-primary">
+                Save Variant
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/pages/Configurator.js"></script>
+<script>
+    // Initialize configurator when page loads
+    function initializePage() {
+        if (typeof ConfiguratorPage !== 'undefined') {
+            window.configuratorPage = new ConfiguratorPage();
+        }
+    }
+</script>
+{% endblock %}
