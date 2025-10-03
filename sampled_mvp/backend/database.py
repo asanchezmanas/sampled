@@ -1,17 +1,49 @@
-# backend/database_extended.py
+# backend/database.py
 import asyncpg
 import json
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime, timezone
-from models_extended import *
-from database import DatabaseManager  # Tu clase existente
+from utils import Logger
+import os
 
-class DatabaseManagerExtended(DatabaseManager):
+from models import *
+
+class DatabaseManager:
     """
     Extensión de DatabaseManager para Fase 2
     Mantiene compatibilidad completa con Fase 1
     """
     
+    def __init__(self):
+        self.logger = Logger()
+        self.pool = None
+        self.database_url = os.environ.get("DATABASE_URL")
+        
+        if not self.database_url:
+            raise ValueError("DATABASE_URL environment variable not set")
+    
+    async def initialize(self):
+        """Initialize connection pool and create tables"""
+        try:
+            # Create connection pool
+            self.pool = await asyncpg.create_pool(
+                self.database_url,
+                min_size=2,
+                max_size=10,
+                max_queries=50000,
+                max_inactive_connection_lifetime=300,
+                command_timeout=60
+            )
+            
+            # Create tables if they don't exist
+            await self._create_tables()
+            
+            self.logger.info("Database initialized successfully")
+            
+        except Exception as e:
+            self.logger.error(f"Database initialization failed: {str(e)}")
+            raise
+        
     async def _create_tables(self):
         """Crear tablas existentes + nuevas tablas Fase 2"""
         
