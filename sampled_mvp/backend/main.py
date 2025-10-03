@@ -1,4 +1,4 @@
-# backend/main_extended.py
+# backend/main.py
 from fastapi import FastAPI, HTTPException, Depends, status, Query, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import List, Optional, Dict, Any
@@ -6,17 +6,17 @@ import asyncio
 from datetime import datetime, timedelta
 
 # Importar modelos extendidos
-from models_extended import *
-from database_extended import DatabaseManagerExtended
+from models import *
+from database import DatabaseManager
 from auth import AuthManager
 from thompson import ThompsonSamplingManager
 from utils import Logger
 
 # Mantener imports existentes
-from models import *  # Compatibilidad con Fase 1
+from models import *  
 
 # Initialize extended managers
-db = DatabaseManagerExtended()  # Reemplaza el DatabaseManager original
+db = DatabaseManager()  
 auth_manager = AuthManager()
 ts_manager = ThompsonSamplingManager(db)
 logger = Logger()
