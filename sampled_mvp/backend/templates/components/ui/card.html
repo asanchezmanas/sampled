@@ -1,0 +1,39 @@
+backend/templates/components/ui/card.html
+
+{#
+  Card Component
+  Usage: {% include 'components/ui/card.html' with {'title': 'My Card', 'content': 'Card content'} %}
+#}
+
+<div class="card {{ classes or '' }}" {% if id %}id="{{ id }}"{% endif %}>
+  {% if title or actions %}
+  <div class="card-header">
+    {% if title %}
+    <div>
+      <h3 class="text-lg font-semibold text-gray-900">{{ title }}</h3>
+      {% if subtitle %}<p class="text-sm text-gray-600">{{ subtitle }}</p>{% endif %}
+    </div>
+    {% endif %}
+    
+    {% if actions %}
+    <div class="flex items-center gap-2">
+      {{ actions | safe }}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+  
+  <div class="card-body {{ body_classes or '' }}">
+    {% if content %}
+      {{ content | safe }}
+    {% else %}
+      {% block card_content %}{% endblock %}
+    {% endif %}
+  </div>
+  
+  {% if footer %}
+  <div class="card-footer">
+    {{ footer | safe }}
+  </div>
+  {% endif %}
+</div>
