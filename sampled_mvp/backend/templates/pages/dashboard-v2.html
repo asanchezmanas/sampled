@@ -1,0 +1,270 @@
+<!-- backend/templates/pages/dashboard.html - Versión actualizada con componentes -->
+{% extends "base.html" %}
+
+{% block title %}Dashboard - MAB System{% endblock %}
+
+{% block breadcrumb %}
+<div class="flex items-center gap-2 text-sm">
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2zm0 0l5.5-5.5L13 15l2-2"/>
+    </svg>
+    <span class="text-gray-900 font-medium">Dashboard</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="mb-8">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <p class="text-gray-600 mt-1">Monitor your A/B testing performance</p>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <!-- Date Range Selector -->
+            {% include 'components/ui/dropdown.html' with {
+                'trigger_classes': 'btn btn-secondary',
+                'trigger_content': '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v14a2 2 0 002 2z"/></svg><span id="date-range-text">Last 30 days</span><svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>',
+                'width': '48',
+                'items': [
+                    {'text': 'Last 7 days', 'onclick': 'MAB.setDateRange("7_days")'},
+                    {'text': 'Last 30 days', 'onclick': 'MAB.setDateRange("30_days")'},
+                    {'text': 'Last 90 days', 'onclick': 'MAB.setDateRange("90_days")'},
+                    {'divider': true},
+                    {'text': 'Custom range...', 'onclick': 'MAB.showDatePicker()'}
+                ]
+            } %}
+            
+            <!-- Export Button -->
+            <button class="btn btn-secondary" onclick="MAB.exportDashboard()">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Export
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+    <!-- Active Tests -->
+    {% include 'components/layout/stats-card.html' with {
+        'title': 'Active Tests',
+        'value': initial_data.stats.active_tests or 0,
+        'change': '+2 this week',
+        'trend': 'up',
+        'icon': 'flask',
+        'color': 'brand',
+        'live_metric': 'active_tests'
+    } %}
+
+    <!-- Total Visitors -->
+    {% include 'components/layout/stats-card.html' with {
+        'title': 'Total Visitors',
+        'value': initial_data.stats.total_visitors | number_format if initial_data.stats.total_visitors else '0',
+        'change': '+12% vs last month',
+        'trend': 'up',
+        'icon': 'users',
+        'color': 'success',
+        'live_metric': 'total_visitors'
+    } %}
+
+    <!-- Average Conversion -->
+    {% include 'components/layout/stats-card.html' with {
+        'title': 'Avg Conversion',
+        'value': ((initial_data.stats.avg_conversion * 100) | round(1) if initial_data.stats.avg_conversion else '0.0') + '%',
+        'change': '-0.2% vs last month',
+        'trend': 'down',
+        'icon': 'chart',
+        'color': 'warning',
+        'live_metric': 'avg_conversion'
+    } %}
+
+    <!-- Revenue Impact -->
+    {% include 'components/layout/stats-card.html' with {
+        'title': 'Revenue Impact',
+        'value': '$' + (initial_data.stats.revenue_impact | number_format if initial_data.stats.revenue_impact else '0'),
+        'change': '+$5.2K this month',
+        'trend': 'up',
+        'icon': 'dollar',
+        'color': 'success',
+        'live_metric': 'revenue_impact'
+    } %}
+</div>
+
+<!-- Main Content Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+    <!-- Left Column: Charts and Analytics -->
+    <div class="xl:col-span-2 space-y-8">
+        <!-- Performance Chart -->
+        {% include 'components/charts/chart-container.html' with {
+            'id': 'performance-chart',
+            'title': 'Performance Overview',
+            'subtitle': 'Conversion rates across all active experiments',
+            'height': '320px',
+            'legend': [
+                {'label': 'Control', 'color': '#465fff'},
+                {'label': 'Variant', 'color': '#12b76a'}
+            ]
+        } %}
+
+        <!-- Recent Experiments Table -->
+        {% include 'components/ui/card.html' with {
+            'title': 'Recent Experiments',
+            'subtitle': 'Latest A/B tests and their performance',
+            'actions': '<a href="/experiments" class="btn btn-secondary btn-sm">View All<svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></a>',
+            'body_classes': 'p-0'
+        } %}
+        {% block card_content %}
+            {% include 'components/ui/table.html' with {
+                'headers': [
+                    {'text': 'Experiment', 'sortable': false},
+                    {'text': 'Status', 'sortable': true},
+                    {'text': 'Visitors', 'sortable': true},
+                    {'text': 'Conversion', 'sortable': true},
+                    {'text': 'Confidence', 'sortable': true},
+                    {'text': 'Actions', 'sortable': false, 'classes': 'text-right'}
+                ],
+                'empty_title': 'No experiments yet',
+                'empty_state': 'Get started by creating your first A/B test'
+            } %}
+            {% block table_content %}
+                {% for experiment in initial_data.experiments[:5] %}
+                    {% include 'components/experiments/experiment-table-row.html' with {'experiment': experiment} %}
+                {% else %}
+                    <!-- Empty state handled by table component -->
+                {% endfor %}
+            {% endblock %}
+        {% endblock %}
+    </div>
+
+    <!-- Right Column: Sidebar Content -->
+    <div class="space-y-6">
+        <!-- Quick Actions -->
+        {% include 'components/dashboard/quick-actions.html' %}
+
+        <!-- Recent Activity -->
+        {% include 'components/ui/card.html' with {
+            'title': 'Recent Activity',
+            'id': 'recent-activity-card'
+        } %}
+        {% block card_content %}
+            {% if initial_data.recent_activity %}
+            <div class="space-y-4">
+                {% for activity in initial_data.recent_activity %}
+                <div class="flex items-start gap-3">
+                    <div class="w-2 h-2 bg-brand-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <div>
+                        <p class="text-sm text-gray-900">{{ activity.description }}</p>
+                        <p class="text-xs text-gray-500 mt-1">{{ activity.created_at | timeago }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-gray-500">No recent activity</p>
+            </div>
+            {% endif %}
+        {% endblock %}
+
+        <!-- Tips & Insights -->
+        {% include 'components/ui/card.html' with {
+            'title': 'Tips & Insights'
+        } %}
+        {% block card_content %}
+            <div class="space-y-4">
+                {% include 'components/ui/alert.html' with {
+                    'type': 'info',
+                    'title': 'Test Duration',
+                    'message': 'Run tests for at least 2 weeks to capture weekly patterns and ensure statistical significance.',
+                    'classes': 'mb-4'
+                } %}
+                
+                {% include 'components/ui/alert.html' with {
+                    'type': 'success',
+                    'title': 'Sample Size',
+                    'message': 'Aim for at least 1,000 visitors per variant for reliable results in most cases.',
+                    'classes': 'mb-0'
+                } %}
+            </div>
+        {% endblock %}
+    </div>
+</div>
+
+<!-- Modals -->
+<!-- Date Picker Modal -->
+<div id="date-picker-modal" class="modal-overlay" data-modal>
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Select Date Range</h3>
+            <button class="modal-close" data-modal-close>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">From</label>
+                    <input type="date" class="form-input" id="date-from">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">To</label>
+                    <input type="date" class="form-input" id="date-to">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" data-modal-close>Cancel</button>
+            <button class="btn btn-primary" onclick="MAB.applyCustomDateRange()">Apply</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/components/index.js"></script>
+<script src="/static/js/pages/Dashboard.js"></script>
+<script>
+    // Initialize dashboard when page loads
+    function initializePage() {
+        if (typeof DashboardPage !== 'undefined') {
+            window.dashboardPage = new DashboardPage();
+        }
+        
+        // Add dashboard-specific functionality
+        window.MAB.setDateRange = function(range) {
+            document.getElementById('date-range-text').textContent = range.replace('_', ' ');
+            if (window.dashboardPage) {
+                window.dashboardPage.setDateRange(range);
+            }
+        };
+        
+        window.MAB.showDatePicker = function() {
+            window.MAB.openModal('date-picker-modal');
+        };
+        
+        window.MAB.applyCustomDateRange = function() {
+            const fromDate = document.getElementById('date-from').value;
+            const toDate = document.getElementById('date-to').value;
+            
+            if (fromDate && toDate) {
+                if (window.dashboardPage) {
+                    window.dashboardPage.setCustomDateRange(fromDate, toDate);
+                }
+                window.MAB.closeModal('date-picker-modal');
+                document.getElementById('date-range-text').textContent = `${fromDate} to ${toDate}`;
+            } else {
+                window.MAB.showToast('Please select both start and end dates', 'error');
+            }
+        };
+    }
+</script>
+{% endblock %}
