@@ -1,4 +1,4 @@
-# orchestration-layer/interfaces/optimization_interface.py
+# orchestration/interfaces/optimization_interface.py
 
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List
