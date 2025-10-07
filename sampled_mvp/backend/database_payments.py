@@ -215,4 +215,300 @@ async def create_or_update_subscription(
             current_period_start, current_period_end, cancel_at_period_end, trial_end
         )
 
-async def update_subscription_status
+async def update_subscription_status(self, user_id: str, status: str) -> None:
+    """Actualizar estado de suscripción"""
+    async with self.pool.acquire() as conn:
+        await conn.execute(
+            "UPDATE subscriptions SET status = $1 WHERE user_id = $2",
+            status, user_id
+        )
+
+async def update_subscription_plan(self, user_id: str, plan: str) -> None:
+    """Actualizar plan de suscripción"""
+    async with self.pool.acquire() as conn:
+        await conn.execute(
+            "UPDATE subscriptions SET plan = $1 WHERE user_id = $2",
+            plan, user_id
+        )
+
+async def update_subscription(
+    self,
+    user_id: str,
+    status: str = None,
+    current_period_end: datetime = None,
+    cancel_at_period_end: bool = None
+) -> None:
+    """Actualizar campos específicos de suscripción"""
+    updates = []
+    params = []
+    param_count = 1
+    
+    if status is not None:
+        updates.append(f"status = ${param_count}")
+        params.append(status)
+        param_count += 1
+    
+    if current_period_end is not None:
+        updates.append(f"current_period_end = ${param_count}")
+        params.append(current_period_end)
+        param_count += 1
+    
+    if cancel_at_period_end is not None:
+        updates.append(f"cancel_at_period_end = ${param_count}")
+        params.append(cancel_at_period_end)
+        param_count += 1
+    
+    if not updates:
+        return
+    
+    params.append(user_id)
+    query = f"UPDATE subscriptions SET {', '.join(updates)} WHERE user_id = ${param_count}"
+    
+    async with self.pool.acquire() as conn:
+        await conn.execute(query, *params)
+
+async def update_subscription_status_by_stripe_id(
+    self,
+    stripe_subscription_id: str,
+    status: str
+) -> None:
+    """Actualizar estado por Stripe subscription ID"""
+    async with self.pool.acquire() as conn:
+        await conn.execute(
+            "UPDATE subscriptions SET status = $1 WHERE stripe_subscription_id = $2",
+            status, stripe_subscription_id
+        )
+
+async def update_subscription_last_payment(self, stripe_subscription_id: str) -> None:
+    """Actualizar última fecha de pago"""
+    async with self.pool.acquire() as conn:
+        await conn.execute(
+            """
+            UPDATE subscriptions 
+            SET updated_at = NOW() 
+            WHERE stripe_subscription_id = $1
+            """,
+            stripe_subscription_id
+        )
+
+# ===== MÉTODOS DE USAGE TRACKING =====
+
+async def get_user_resource_count(self, user_id: str, resource_type: str) -> int:
+    """Obtener conteo de recurso del usuario"""
+    async with self.pool.acquire() as conn:
+        # Para recursos permanentes (experimentos, etc)
+        if resource_type == 'experiments':
+            count = await conn.fetchval(
+                "SELECT COUNT(*) FROM experiments WHERE user_id = $1",
+                user_id
+            )
+        elif resource_type == 'team_members':
+            count = await conn.fetchval(
+                "SELECT COUNT(*) FROM team_members WHERE user_id = $1",
+                user_id
+            ) or 1  # Al menos 1 (el owner)
+        # Para recursos con límite mensual
+        elif resource_type == 'api_calls_per_month':
+            now = datetime.now(timezone.utc)
+            period_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            
+            count = await conn.fetchval(
+                """
+                SELECT count FROM usage_tracking 
+                WHERE user_id = $1 
+                  AND resource_type = $2 
+                  AND period_start = $3
+                """,
+                user_id, resource_type, period_start
+            ) or 0
+        elif resource_type == 'monthly_visitors':
+            now = datetime.now(timezone.utc)
+            period_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            
+            count = await conn.fetchval(
+                """
+                SELECT COUNT(DISTINCT user_id) FROM assignments
+                WHERE experiment_id IN (
+                    SELECT id FROM experiments WHERE user_id = $1
+                )
+                AND assigned_at >= $2
+                """,
+                user_id, period_start
+            ) or 0
+        else:
+            count = 0
+        
+        return count
+
+async def increment_api_calls(self, user_id: str) -> int:
+    """Incrementar contador de API calls y retornar total"""
+    now = datetime.now(timezone.utc)
+    period_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    period_end = (period_start + timedelta(days=32)).replace(day=1) - timedelta(seconds=1)
+    
+    async with self.pool.acquire() as conn:
+        count = await conn.fetchval(
+            """
+            INSERT INTO usage_tracking (user_id, resource_type, count, period_start, period_end)
+            VALUES ($1, 'api_calls_per_month', 1, $2, $3)
+            ON CONFLICT (user_id, resource_type, period_start) DO UPDATE
+            SET count = usage_tracking.count + 1
+            RETURNING count
+            """,
+            user_id, period_start, period_end
+        )
+    
+    return count
+
+async def reset_monthly_usage(self, user_id: str) -> None:
+    """Reset usage mensual (llamar al inicio de cada mes)"""
+    now = datetime.now(timezone.utc)
+    last_month_start = (now.replace(day=1) - timedelta(days=1)).replace(day=1)
+    
+    async with self.pool.acquire() as conn:
+        await conn.execute(
+            """
+            DELETE FROM usage_tracking 
+            WHERE user_id = $1 
+              AND period_start < $2
+              AND resource_type LIKE '%_per_month'
+            """,
+            user_id, last_month_start
+        )
+
+# ===== MÉTODOS DE PAYMENT HISTORY =====
+
+async def create_payment_record(
+    self,
+    user_id: str,
+    subscription_id: str,
+    stripe_payment_intent_id: str,
+    amount: float,
+    status: str,
+    description: str = None
+) -> str:
+    """Crear registro de pago"""
+    async with self.pool.acquire() as conn:
+        payment_id = await conn.fetchval(
+            """
+            INSERT INTO payment_history 
+            (user_id, subscription_id, stripe_payment_intent_id, amount, status, description)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id
+            """,
+            user_id, subscription_id, stripe_payment_intent_id, amount, status, description
+        )
+    
+    return str(payment_id)
+
+async def get_user_payment_history(
+    self,
+    user_id: str,
+    limit: int = 20
+) -> List[Dict[str, Any]]:
+    """Obtener historial de pagos del usuario"""
+    async with self.pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT * FROM payment_history 
+            WHERE user_id = $1 
+            ORDER BY created_at DESC 
+            LIMIT $2
+            """,
+            user_id, limit
+        )
+    
+    return [dict(row) for row in rows]
+
+# ===== MÉTODOS DE INVOICES =====
+
+async def create_invoice(
+    self,
+    user_id: str,
+    subscription_id: str,
+    stripe_invoice_id: str,
+    amount_due: float,
+    status: str,
+    invoice_date: datetime
+) -> str:
+    """Crear factura"""
+    async with self.pool.acquire() as conn:
+        invoice_id = await conn.fetchval(
+            """
+            INSERT INTO invoices 
+            (user_id, subscription_id, stripe_invoice_id, amount_due, status, invoice_date)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id
+            """,
+            user_id, subscription_id, stripe_invoice_id, amount_due, status, invoice_date
+        )
+    
+    return str(invoice_id)
+
+async def get_user_invoices(self, user_id: str, limit: int = 20) -> List[Dict[str, Any]]:
+    """Obtener facturas del usuario"""
+    async with self.pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT * FROM invoices 
+            WHERE user_id = $1 
+            ORDER BY invoice_date DESC 
+            LIMIT $2
+            """,
+            user_id, limit
+        )
+    
+    return [dict(row) for row in rows]
+
+# ===== MÉTODOS DE ESTADÍSTICAS =====
+
+async def get_subscription_stats(self) -> Dict[str, Any]:
+    """Obtener estadísticas de suscripciones (admin)"""
+    async with self.pool.acquire() as conn:
+        stats = await conn.fetchrow(
+            """
+            SELECT 
+                COUNT(*) FILTER (WHERE plan = 'free') as free_users,
+                COUNT(*) FILTER (WHERE plan = 'starter') as starter_users,
+                COUNT(*) FILTER (WHERE plan = 'professional') as professional_users,
+                COUNT(*) FILTER (WHERE plan = 'enterprise') as enterprise_users,
+                COUNT(*) FILTER (WHERE status = 'active') as active_subscriptions,
+                COUNT(*) FILTER (WHERE status = 'trialing') as trialing_subscriptions,
+                COUNT(*) FILTER (WHERE status = 'past_due') as past_due_subscriptions,
+                SUM(CASE 
+                    WHEN plan = 'starter' THEN 29
+                    WHEN plan = 'professional' THEN 99
+                    WHEN plan = 'enterprise' THEN 299
+                    ELSE 0
+                END) as monthly_recurring_revenue
+            FROM subscriptions
+            """
+        )
+    
+    return dict(stats) if stats else {}
+
+async def get_churn_data(self, days: int = 30) -> Dict[str, Any]:
+    """Obtener datos de churn"""
+    async with self.pool.acquire() as conn:
+        start_date = datetime.now(timezone.utc) - timedelta(days=days)
+        
+        stats = await conn.fetchrow(
+            """
+            SELECT 
+                COUNT(*) FILTER (WHERE canceled_at >= $1) as cancellations,
+                COUNT(*) FILTER (WHERE created_at >= $1) as new_subscriptions,
+                COUNT(*) FILTER (WHERE status = 'active') as total_active
+            FROM subscriptions
+            """,
+            start_date
+        )
+    
+    result = dict(stats) if stats else {}
+    
+    # Calcular churn rate
+    if result.get('total_active', 0) > 0:
+        result['churn_rate'] = result.get('cancellations', 0) / result['total_active']
+    else:
+        result['churn_rate'] = 0
+    
+    return result
