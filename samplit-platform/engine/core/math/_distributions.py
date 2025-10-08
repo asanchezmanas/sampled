@@ -9,8 +9,8 @@ used by Samplit's optimization engine.
 ⚠️ CONFIDENTIAL - Implementation details are trade secrets
 """
 
+from typing import Dict, Any, List
 import numpy as np
-from typing import Dict, Any
 
 def sample_posterior(success_count: int,
                     failure_count: int,
