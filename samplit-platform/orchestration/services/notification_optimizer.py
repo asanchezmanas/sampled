@@ -28,6 +28,7 @@ class NotificationOptimizationService:
         self.time_optimizer = OptimizerFactory.create(
             OptimizationStrategy.FAST_LEARNING
         )
+        self.logger = logging.getLogger(__name__)
     
     async def get_optimal_notification(self,
                                       campaign_id: str,
