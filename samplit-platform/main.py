@@ -29,7 +29,9 @@ from public_api.routers import (
     analytics,
     funnels,
     emails,
-    notifications
+    notifications,
+    installations,
+    subscriptions
 )
 
 # ============================================
@@ -206,6 +208,20 @@ app.include_router(
     analytics.router,
     prefix=f"{settings.API_PREFIX}/analytics",
     tags=["Analytics"]
+)
+
+# Installations
+app.include_router(
+    installations.router,
+    prefix=f"{settings.API_PREFIX}/installations",
+    tags=["Installations"]
+)
+
+# Subscriptions
+app.include_router(
+    subscriptions.router,
+    prefix=f"{settings.API_PREFIX}/subscriptions",
+    tags=["Subscriptions"]
 )
 
 # Funnels (si está habilitado)
