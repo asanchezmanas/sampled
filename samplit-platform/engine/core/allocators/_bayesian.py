@@ -9,6 +9,8 @@ This module implements Samplit's adaptive allocation algorithm
 using advanced Bayesian inference methods.
 """
 
+from typing import Dict, Any, List
+from datetime import datetime, timezone
 import numpy as np
 from .._base import BaseAllocator
 from ..math._distributions import sample_posterior  # Ofuscado
