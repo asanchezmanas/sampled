@@ -62,6 +62,7 @@ class FunnelOptimizationService:
         
         # Active sessions
         self.active_sessions: Dict[str, FunnelSession] = {}
+        self.logger = logging.getLogger(__name__)
     
     async def start_funnel_session(self,
                                    funnel_id: str,
