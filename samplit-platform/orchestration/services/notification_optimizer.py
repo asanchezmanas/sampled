@@ -1,5 +1,11 @@
 # orchestration/services/notification_optimizer.py
 
+from typing import List, Dict, Any, Optional
+from data_access.database import DatabaseManager
+from orchestration.factories.optimizer_factory import OptimizerFactory
+from orchestration.interfaces.optimization_interface import OptimizationStrategy
+import logging
+
 class NotificationOptimizationService:
     """
     Push notification optimization service
