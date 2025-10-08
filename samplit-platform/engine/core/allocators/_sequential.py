@@ -11,6 +11,7 @@ Implementation: [PROPRIETARY - PATENT PENDING]
 from typing import List, Dict, Any, Optional
 from .._base import BaseAllocator
 from ._bayesian import AdaptiveBayesianAllocator
+from datetime import datetime, timezone
 
 class SequentialAllocator(BaseAllocator):
     """
