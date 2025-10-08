@@ -16,6 +16,7 @@ class EmailOptimizationService:
         self.optimizer = OptimizerFactory.create(
             OptimizationStrategy.ADAPTIVE
         )
+        self.logger = logging.getLogger(__name__)
     
     async def select_email_variant(self, 
                                    campaign_id: str,
