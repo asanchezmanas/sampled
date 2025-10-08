@@ -3,6 +3,10 @@
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from datetime import datetime
+from data_access.database import DatabaseManager
+from orchestration.factories.optimizer_factory import OptimizerFactory
+from orchestration.interfaces.optimization_interface import OptimizationStrategy
+import logging
 
 @dataclass
 class FunnelStep:
