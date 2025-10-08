@@ -179,3 +179,53 @@ class VariantRepository(BaseRepository):
             )
         
         return dict(row) if row else None
+
+    # data-access/repositories/variant_repository.py
+    # AGREGAR este método a la clase VariantRepository
+
+    async def increment_conversion(self, variant_id: str) -> None:
+        """
+        Increment conversion count and update metrics
+    
+        Called after recording a conversion in allocations table.
+        Updates public-facing metrics.
+        """
+        async with self.db.acquire() as conn:
+            await conn.execute(
+                """
+                UPDATE variants
+                SET 
+                    total_conversions = total_conversions + 1,
+                    observed_conversion_rate = 
+                        (total_conversions + 1)::DECIMAL / 
+                        GREATEST(total_allocations, 1)::DECIMAL,
+                    updated_at = NOW()
+                WHERE id = $1
+                """,
+                variant_id
+            )
+
+    async def find_by_id(self, id: str) -> Optional[Dict[str, Any]]:
+        """Get variant by ID (required by BaseRepository)"""
+        return await self.get_variant_public_data(id)
+
+    async def create(self, data: Dict[str, Any]) -> str:
+        """Create variant (required by BaseRepository)"""
+        return await self.create_variant(
+            experiment_id=data['experiment_id'],
+            name=data['name'],
+            content=data['content'],
+            initial_algorithm_state=data.get('initial_algorithm_state', {
+                'success_count': 1,
+                'failure_count': 1,
+                'samples': 0,
+                'algorithm_type': 'bayesian'
+            })
+        )
+
+    async def update(self, id: str, data: Dict[str, Any]) -> bool:
+        """Update variant (required by BaseRepository)"""
+        if 'algorithm_state' in data:
+            await self.update_algorithm_state(id, data['algorithm_state'])
+            return True
+        return False
