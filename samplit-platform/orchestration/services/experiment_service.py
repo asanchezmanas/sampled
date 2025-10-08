@@ -22,6 +22,7 @@ class ExperimentService:
         self.experiment_repo = ExperimentRepository(db_manager.pool)
         self.variant_repo = VariantRepository(db_manager.pool)
         self.allocation_repo = AllocationRepository(db_manager.pool)
+        self.logger = logging.getLogger(__name__)
     
     async def create_experiment(self,
                                user_id: str,
