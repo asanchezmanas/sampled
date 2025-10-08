@@ -8,6 +8,7 @@ Optimized for low-traffic scenarios where fast learning is critical.
 Implementation: [PROPRIETARY]
 """
 
+from typing import Dict, Any, List
 from .._base import BaseAllocator
 import random
 
