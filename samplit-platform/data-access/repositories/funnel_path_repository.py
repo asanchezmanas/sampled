@@ -47,7 +47,6 @@ class FunnelPathRepository(BaseRepository):
                     attempts, conversions, conversion_rate,
                     optimization_state, last_seen
                 FROM funnel_path_performance
-                WHERE funnel_id = $
                 WHERE funnel_id = $1 AND path_hash = $2
                 """,
                 funnel_id,
