@@ -1,5 +1,7 @@
 # orchestration/utils/secure_logger.py
 
+import logging
+
 class SecureLogger:
     """
     Logger que sanitiza información sensible
