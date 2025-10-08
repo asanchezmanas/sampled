@@ -7,10 +7,11 @@ Uses Bayesian inference for intelligent traffic allocation.
 
 Implementation: [CONFIDENTIAL - BAYESIAN OPTIMIZATION]
 """
-
 from typing import List, Dict, Any
 from ..base import BaseStrategy
 from ..allocators._bayesian import AdaptiveBayesianAllocator
+from ..allocators._explore import ExploreExploitAllocator
+import logging
 
 class AdaptiveStrategy(BaseStrategy):
     """
