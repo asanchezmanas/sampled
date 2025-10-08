@@ -13,6 +13,7 @@ Implementation: [CONFIDENTIAL - PATENT PENDING]
 from typing import List, Dict, Any
 from ..base import BaseStrategy
 from ..allocators._sequential import SequentialAllocator
+import logging
 
 class SequentialStrategy(BaseStrategy):
     """
