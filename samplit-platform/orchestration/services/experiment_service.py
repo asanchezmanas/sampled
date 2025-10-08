@@ -5,7 +5,8 @@ from data_access.repositories.experiment_repository import ExperimentRepository
 from data_access.repositories.variant_repository import VariantRepository
 from data_access.repositories.allocation_repository import AllocationRepository
 from orchestration.factories.optimizer_factory import OptimizerFactory
-from orchestration.interfaces.optimizer_interface import OptimizationStrategy
+from orchestration.interfaces.optimization_interface import OptimizationStrategy
+import logging
 
 class ExperimentService:
     """
