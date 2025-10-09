@@ -148,6 +148,24 @@ async def add_security_headers(request: Request, call_next: Callable):
     return response
 
 # ============================================
+# PUBLIC ENDPOINTS (No Auth)
+# ============================================
+
+# Tracker API (usado por JavaScript tracker en sitios de usuarios)
+app.include_router(
+    tracker.router,
+    prefix=f"{settings.API_PREFIX}/tracker",
+    tags=["Tracker (Public)"]
+)
+
+# Proxy Middleware (intercepta y modifica HTML)
+app.include_router(
+    proxy.router,
+    prefix="/proxy",
+    tags=["Proxy Middleware (Public)"]
+)
+
+# ============================================
 # EXCEPTION HANDLERS
 # ============================================
 
