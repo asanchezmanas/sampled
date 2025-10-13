@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}MAB System - A/B Testing Platform{% endblock %}</title>
+    <title>{% block title %}Samplit Platform{% endblock %}</title>
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg">
@@ -42,7 +42,7 @@
                         </svg>
                     </div>
                     <div class="logo">
-                        <span>MAB System</span>
+                        <span>Samplit Platform</span>
                         <span class="badge badge-active ml-2">Beta</span>
                     </div>
                 </div>
@@ -229,7 +229,7 @@
                                 <svg class="w-8 h-8 text-brand-500" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                                 </svg>
-                                <span class="text-xl font-bold text-gray-900">MAB System</span>
+                                <span class="text-xl font-bold text-gray-900">Samplit Platform</span>
                                 <span class="badge badge-active">Beta</span>
                             </div>
                             
@@ -252,7 +252,7 @@
                 <footer class="border-t border-gray-200 bg-gray-50">
                     <div class="mx-auto max-w-7xl px-6 py-8">
                         <div class="text-center text-sm text-gray-500">
-                            <p>&copy; 2024 MAB System. Built for modern A/B testing.</p>
+                            <p>&copy; 2024 Samplit Platform. Built for modern A/B testing.</p>
                         </div>
                     </div>
                 </footer>
@@ -303,10 +303,10 @@
                     initializePage();
                 }
                 
-                console.log('MAB System initialized');
+                console.log('Samplit Platform initialized');
                 
             } catch (error) {
-                console.error('Failed to initialize MAB System:', error);
+                console.error('Failed to initialize Samplit Platform:', error);
             }
         });
     </script>
@@ -320,7 +320,7 @@
             api: () => window.MAB?.api,
             reload: () => location.reload()
         };
-        console.log('Development mode active. Use MAB_DEV for debugging.');
+        console.log('Development mode active. Use SAMPLIT_DEV for debugging.');
     </script>
     {% endif %}
 </body>
