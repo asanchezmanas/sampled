@@ -512,6 +512,69 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ============================================
+-- EMAIL INTEGRATIONS (OAuth)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS email_integrations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    
+    platform VARCHAR(50) NOT NULL,
+    credentials BYTEA NOT NULL,  -- Cifradas
+    status VARCHAR(20) DEFAULT 'active',
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    UNIQUE(user_id, platform)
+);
+
+CREATE INDEX idx_email_integrations_user ON email_integrations(user_id);
+
+-- ============================================
+-- OAUTH STATES (temporal)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS oauth_states (
+    state VARCHAR(255) PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    platform VARCHAR(50) NOT NULL,
+    redirect_uri VARCHAR(500) NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_oauth_states_expires ON oauth_states(expires_at);
+
+-- Cleanup automático de states expirados
+CREATE OR REPLACE FUNCTION cleanup_expired_oauth_states()
+RETURNS INTEGER AS $$
+DECLARE
+    v_deleted INTEGER;
+BEGIN
+    WITH deleted AS (
+        DELETE FROM oauth_states 
+        WHERE expires_at < NOW()
+        RETURNING state
+    )
+    SELECT COUNT(*) INTO v_deleted FROM deleted;
+    RETURN v_deleted;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================
+-- EMAIL SENDS (actualizar)
+-- ============================================
+
+-- Añadir columna para variant_selections
+ALTER TABLE email_sends 
+ADD COLUMN IF NOT EXISTS variant_selections JSONB;
+
+-- Índices para performance
+CREATE INDEX IF NOT EXISTS idx_email_sends_opened ON email_sends(opened_at) WHERE opened_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_email_sends_clicked ON email_sends(clicked_at) WHERE clicked_at IS NOT NULL;
+
+-- ============================================
 -- COMPLETADO
 -- ============================================
 
