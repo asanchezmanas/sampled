@@ -229,3 +229,21 @@ class VariantRepository(BaseRepository):
             await self.update_algorithm_state(id, data['algorithm_state'])
             return True
         return False
+
+    async def increment_allocation(self, variant_id: str) -> None:
+    """
+    Increment allocation count
+    
+    Called when user is assigned to this variant.
+    """
+    async with self.db.acquire() as conn:
+        await conn.execute(
+            """
+            UPDATE variants
+            SET 
+                total_allocations = total_allocations + 1,
+                updated_at = NOW()
+            WHERE id = $1
+            """,
+            variant_id
+        )
