@@ -1,0 +1,134 @@
+# static/templates/components/experiments/experiment-card.html
+
+
+{#
+  Experiment Card Component
+  backend/templates/components/experiments/experiment-card.html
+  
+  Usage: 
+  {% include 'components/experiments/experiment-card.html' with {'experiment': experiment} %}
+#}
+
+<div class="card experiment-card" data-experiment-id="{{ experiment.id }}" data-status="{{ experiment.status }}">
+  <div class="card-body">
+    <!-- Header -->
+    <div class="flex items-start justify-between mb-4">
+      <div class="flex-1">
+        <h3 class="font-semibold text-gray-900 mb-1 cursor-pointer hover:text-brand-600 transition-colors" 
+            onclick="MAB.viewExperiment('{{ experiment.id }}')">
+          {{ experiment.name }}
+        </h3>
+        <p class="text-sm text-gray-500">{{ experiment.url | urlparse }}</p>
+        <p class="text-xs text-gray-400 mt-1">{{ experiment.created_at | timeago }}</p>
+      </div>
+      
+      <div class="flex items-center gap-2">
+        {% include 'components/ui/badge.html' with {
+          'type': experiment.status,
+          'text': experiment.status | title,
+          'size': 'sm'
+        } %}
+        
+        {% include 'components/ui/dropdown.html' with {
+          'trigger_classes': 'p-1 hover:bg-gray-100 rounded',
+          'trigger_content': '<svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>',
+          'width': '48',
+          'items': [
+            {'text': 'View Details', 'href': '/experiments/' + experiment.id},
+            {'text': 'Edit', 'href': '/experiments/' + experiment.id + '/edit'},
+            {'divider': true},
+            {'text': 'Duplicate', 'onclick': 'MAB.duplicateExperiment("' + experiment.id + '")'},
+            {'text': 'Archive', 'onclick': 'MAB.archiveExperiment("' + experiment.id + '")', 'classes': 'text-error-600'}
+          ]
+        } %}
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div class="text-center">
+        <div class="text-lg font-bold text-gray-900" data-live-metric="visitors-{{ experiment.id }}">
+          {{ experiment.stats.total_users | default(0) | number_format }}
+        </div>
+        <div class="text-xs text-gray-500">Visitors</div>
+      </div>
+      <div class="text-center">
+        <div class="text-lg font-bold text-gray-900" data-live-metric="conversion-{{ experiment.id }}">
+          {{ (experiment.stats.conversion_rate * 100) | round(1) if experiment.stats.conversion_rate else '0.0' }}%
+        </div>
+        <div class="text-xs text-gray-500">Conversion</div>
+      </div>
+    </div>
+
+    {% if experiment.status == 'active' %}
+    <!-- Confidence Progress -->
+    <div class="mb-4">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-xs text-gray-500">Statistical Confidence</span>
+        <span class="text-xs font-medium text-gray-700" data-live-metric="confidence-{{ experiment.id }}">
+          {{ experiment.stats.confidence | default(0) | round }}%
+        </span>
+      </div>
+      
+      {% set confidence = experiment.stats.confidence | default(0) %}
+      {% set confidence_color = 'bg-error-500' if confidence < 80 else 'bg-warning-500' if confidence < 95 else 'bg-success-500' %}
+      
+      <div class="w-full bg-gray-200 rounded-full h-2">
+        <div class="{{ confidence_color }} h-2 rounded-full transition-all duration-300" 
+             style="width: {{ confidence }}%"></div>
+      </div>
+      
+      <div class="mt-1 text-xs {{ 'text-error-600' if confidence < 80 else 'text-warning-600' if confidence < 95 else 'text-success-600' }}">
+        {% if confidence < 80 %}
+          Need more data for significance
+        {% elif confidence < 95 %}
+          Approaching statistical significance
+        {% else %}
+          Statistically significant results
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Variant Preview -->
+    {% if experiment.variants and experiment.variants | length > 1 %}
+    <div class="mb-4">
+      <div class="text-xs text-gray-500 mb-2">Variants ({{ experiment.variants | length }})</div>
+      <div class="flex gap-1">
+        {% for variant in experiment.variants[:4] %}
+        <div class="flex-1 h-2 rounded" 
+             style="background-color: {{ ['#465fff', '#12b76a', '#f79009', '#ef4444'][loop.index0] }}"></div>
+        {% endfor %}
+        {% if experiment.variants | length > 4 %}
+        <div class="text-xs text-gray-400 ml-1">+{{ experiment.variants | length - 4 }}</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div class="flex gap-2 mt-4">
+      <button onclick="MAB.viewExperiment('{{ experiment.id }}')" 
+              class="flex-1 btn btn-sm btn-secondary">
+        View Details
+      </button>
+      
+      {% if experiment.status == 'draft' %}
+        <button data-action="start-experiment" data-target="{{ experiment.id }}" 
+                class="flex-1 btn btn-sm btn-primary">
+          Start Test
+        </button>
+      {% elif experiment.status == 'active' %}
+        <button data-action="pause-experiment" data-target="{{ experiment.id }}" 
+                class="flex-1 btn btn-sm btn-warning">
+          Pause
+        </button>
+      {% elif experiment.status == 'paused' %}
+        <button data-action="resume-experiment" data-target="{{ experiment.id }}" 
+                class="flex-1 btn btn-sm btn-success">
+          Resume
+        </button>
+      {% endif %}
+    </div>
+  </div>
+</div>
