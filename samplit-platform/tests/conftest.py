@@ -43,11 +43,16 @@ async def _clean_test_database(db: DatabaseManager):
     """Clean test database"""
     async with db.pool.acquire() as conn:
         # Delete in reverse order of dependencies
+        await conn.execute("DELETE FROM email_interactions")
+        await conn.execute("DELETE FROM email_sends")
         await conn.execute("DELETE FROM element_interactions")
         await conn.execute("DELETE FROM micro_conversions")
         await conn.execute("DELETE FROM session_analytics")
         await conn.execute("DELETE FROM funnel_path_performance")
+        await conn.execute("DELETE FROM assignments")  # AGREGAR ESTA LÍNEA
         await conn.execute("DELETE FROM allocations")
+        await conn.execute("DELETE FROM element_variants")  # AGREGAR
+        await conn.execute("DELETE FROM experiment_elements")  # AGREGAR
         await conn.execute("DELETE FROM variants")
         await conn.execute("DELETE FROM experiments")
         await conn.execute("DELETE FROM users")
