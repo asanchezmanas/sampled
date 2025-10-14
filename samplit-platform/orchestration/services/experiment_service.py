@@ -42,6 +42,7 @@ class ExperimentService:
         experiment_id = await self.experiment_repo.create({
             'user_id': user_id,
             'name': name,
+            'description': '',
             'optimization_strategy': strategy.value,
             'config': config or {},
             'status': 'draft'
