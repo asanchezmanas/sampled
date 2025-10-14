@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 
 # Asegurar que el secret esté disponible para tests
 os.environ['ALGORITHM_STATE_SECRET'] = 'test-secret-key-minimum-32-characters-for-testing-purposes'
-os.environ['SUPABASE_DB_URL'] = os.environ.get('TEST_DATABASE_URL', 'postgresql://localhost/samplit_test')
+os.environ['DATABASE_URL'] = os.environ.get('TEST_DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/samplit_test')
 
 from data_access.database import DatabaseManager
 from engine.state.encryption import StateEncryption
