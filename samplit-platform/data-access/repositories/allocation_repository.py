@@ -6,7 +6,7 @@ import json
 from datetime import datetime, timezone
 
 class AllocationRepository(BaseRepository):
-    """Repository for user allocations"""
+    """Repository for user assignments"""
     
     async def get_allocation(
         self, 
@@ -21,7 +21,7 @@ class AllocationRepository(BaseRepository):
                     id, experiment_id, variant_id, user_identifier,
                     session_id, context, allocated_at, converted_at,
                     conversion_value, metadata
-                FROM allocations 
+                FROM assignments 
                 WHERE experiment_id = $1 AND user_identifier = $2
                 """,
                 experiment_id, user_identifier
